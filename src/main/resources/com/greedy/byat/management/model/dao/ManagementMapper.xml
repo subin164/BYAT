@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.greedy.byat.management.model.dao.ManagementMapper">
+ 	
+<resultMap type="ManagementDTO" id="managementResultMap">
+	<id property="memberNo" column="MEMBER_NO"/>
+	<result property="memberId" column="MEMBER_ID"/>
+	<result property="memberName" column="MEMBER_NAME"/>
+	<result property="permitName" column="PERMIT_NAME"/>
+	<result property="permitCode" column="PERMIT_CODE"/>
+	<result property="absenceYN" column="ABSENCE_YN"/>
+	<result property="initPwdYN" column="INIT_PWD_YN"/>
+</resultMap> 
+
+<resultMap type="PermitDTO" id="permitResultMap">
+	<id property="code" column="PERMIT_CODE"/>
+	<result property="name" column="PERMIT_NAME"/>
+	<result property="description" column="PERMIT_DESCRIPTION"/>
+</resultMap>
+ 	
+ 	<select id="selectManagementList" resultMap="managementResultMap">
+		SELECT /* com.greedy.byat.management.model.dao.ManagementMapper#selectManagementList() */
+ 		       A.MEMBER_NO
+ 		     , A.MEMBER_NAME
+ 		     , B.PERMIT_NAME
+ 		     , A.PERMIT_CODE
+ 		     , A.MEMBER_ID
+ 		     , A.ABSENCE_YN
+ 		     , A.INIT_PWD_YN
+ 		  FROM TBL_MEMBER A 
+ 		  JOIN TBL_PERMIT B ON (A.PERMIT_CODE = B.PERMIT_CODE)
+ 		 WHERE A.ABSENCE_YN = 'N'
+ 		   AND A.MEMBER_NO != 13
+ 	</select> 	
+ 	
+ 	<select id="selectManagementDeletedList" resultMap="managementResultMap">
+ 		SELECT /* com.greedy.byat.management.model.dao.ManagementMapper#selectManagementDeletedList() */
+ 		       A.MEMBER_NO
+ 		     , A.MEMBER_NAME
+ 		     , B.PERMIT_NAME
+ 		     , A.PERMIT_CODE
+ 		     , A.MEMBER_ID
+ 		     , A.ABSENCE_YN
+ 		     , A.INIT_PWD_YN
+ 		  FROM TBL_MEMBER A 
+ 		  JOIN TBL_PERMIT B ON (A.PERMIT_CODE = B.PERMIT_CODE)
+ 		 WHERE A.ABSENCE_YN = 'Y'
+ 		   AND A.MEMBER_NO != 13
+ 	</select>
+ 	
+ 	
+ 	<insert id="insertManagement" parameterType="hashmap">
+ 		INSERT /* com.greedy.byat.management.model.dao.ManagementMapper#insertManagement() */
+ 		  INTO TBL_MEMBER A
+ 		 (
+ 		   A.MEMBER_NO
+ 		 , A.MEMBER_NAME
+ 		 , A.MEMBER_ID
+ 		 , A.MEMBER_PWD
+ 		 , A.PERMIT_CODE
+ 		 , A.ABSENCE_YN
+ 		 , A.INIT_PWD_YN
+ 		 )
+ 		VALUES
+ 		(
+ 		  SEQ_MEMBER_NO.NEXTVAL
+ 		, #{ name }
+ 		, #{ id }
+ 		, #{ pwd }
+ 		, #{ permitNo }
+ 		, 'N'
+ 		, 'Y'
+ 		)
+ 	</insert>
+ 	
+ 	<update id="updateManagement">
+ 		UPDATE TBL_MEMBER A /* com.greedy.byat.management.model.dao.ManagementMapper#updateManagement() */
+ 		   SET A.MEMBER_NAME = #{ memberName }
+ 		     , A.PERMIT_CODE = #{ permitCode }
+ 		     , A.MEMBER_ID = #{ memberId }
+ 		 WHERE A.MEMBER_NO = #{ memberNo }
+ 		   AND A.ABSENCE_YN = 'N'
+ 	</update>
+ 	
+ 	<update id="deleteManagement">
+ 		UPDATE TBL_MEMBER A /* com.greedy.byat.management.model.dao.ManagementMapper#deleteManagement() */
+ 		   SET A.ABSENCE_YN = 'Y'
+ 		 WHERE A.MEMBER_NO NOT IN (SELECT C.MEMBER_NO 
+						 			FROM TBL_PROJECT_MEMBERS C
+									JOIN TBL_PROJECT D ON(C.PROJECT_CODE = D.PROJECT_CODE)
+									WHERE C.MEMBER_NO = #{ memberNo }
+									  AND D.PROJECT_PROGRESS = '진행중'
+								  )
+		   AND A.MEMBER_NO = #{ memberNo }
+ 		 
+ 	</update>
+ 	
+ 	
+ 	<update id="restoreManagement">
+ 		UPDATE TBL_MEMBER A /* com.greedy.byat.management.model.dao.ManagementMapper#restoreManagement() */
+ 		   SET A.ABSENCE_YN = 'N'
+ 		 WHERE A.MEMBER_NO = #{ no }
+ 	</update>
+ 	
+ 	
+ 	<insert id="insertNoticeSettingByOneMember">
+ 		INSERT /* com.greedy.byat.management.model.dao.ManagementMapper#insertNoticeSettingByOneMember() */
+ 		  INTO TBL_NOTIFICATION_BY_MEMBER A
+ 		(
+ 		  A.MEMBER_NO
+ 		, A.PROJECT_NOTIFICATION_SETTING
+ 		, A.ISSUE_NOTIFICATION_SETTING
+ 		, A.SPRINT_NOTIFICATION_SETTING
+ 		, A.CALENDAR_NOTIFICATION_SETTING
+ 		, MEETINGLOG_NOTIFICATION_SETTING
+ 		, BACKLOG_NOTIFICATION_SETTING
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_MEMBER_NO.CURRVAL
+ 		, 'Y'
+ 		, 'Y'
+ 		, 'Y'
+ 		, 'Y'
+ 		, 'Y'
+ 		, 'Y'
+ 		)
+ 	</insert>
+ 	
+ </mapper>

@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="com.greedy.byat.project.model.dao.ProjectMapper">
+ 
+ 	<resultMap id="projectResultMap" type="ProjectDTO">
+ 		<id property="code" column="PROJECT_CODE"/>
+ 		<result property="title" column="PROJECT_TITLE"/>
+ 		<result property="startDate" column="PROJECT_START_DATE"/>
+ 		<result property="endDate" column="PROJECT_END_DATE"/>
+ 		<result property="progress" column="PROJECT_PROGRESS"/>
+ 		<result property="body" column="PROJECT_BODY"/>
+ 		<result property="version" column="PROJECT_VERSION"/>
+ 		<result property="deleteStatus" column="PROJECT_DELETE_STATUS"/>
+ 		<result property="writer" column="PROJECT_WRITER"/>
+ 		
+ 		<association property="writerMember" resultMap="memberResultMap"/>
+ 	</resultMap>
+ 	
+ 	<resultMap id="memberResultMap" type="MemberDTO">
+ 		<id property="no" column="MEMBER_NO"/>
+ 		<result property="permitCode" column="PERMIT_CODE"/>
+ 		<result property="id" column="MEMBER_ID"/>
+ 		<result property="pwd" column="MEMBER_PWD"/>
+ 		<result property="name" column="MEMBER_NAME"/>
+ 		<result property="phone" column="MEMBER_PHONE"/>
+ 		<result property="email" column="MEMBER_EMAIL"/>
+ 		<result property="absenceYN" column="ABSENCE_YN"/>
+ 		<result property="initPwdYN" column="INIT_PWD_YN"/>
+ 	</resultMap>
+ 	
+ 	<resultMap id ="projectMembersResultMap" type="ProjectMembersDTO">
+ 		<id property="code" column="PROJECT_CODE"/>
+ 		<id property="no" column="MEMBER_NO"/>
+ 		<result property="participationYn" column="PROJECT_PARTICIPATION_YN"/>
+ 		<result property="id" column="MEMBER_ID"/>
+ 		<result property="name" column="MEMBER_NAME"/>
+ 		<result property="roleName" column="ROLE_NAME"/>
+ 	</resultMap>
+ 	
+ 	<select id="selectTotalCount" resultType="_int"> 	
+ 		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#selectTotalCount() */
+ 		       COUNT(*)
+ 		  FROM TBL_PROJECT A
+ 		<if test="searchCondition == 'name'">
+ 		  JOIN TBL_PROJECT_MEMBERS B ON(A.PROJECT_CODE = B.PROJECT_CODE)
+ 		  JOIN TBL_MEMBER C ON(B.MEMBER_NO = C.MEMBER_NO)
+ 		</if>
+ 		<where>
+ 			<if test="searchCondition == 'title'">
+ 				A.PROJECT_TITLE '%' || #{ searchValue } || '%'
+ 			</if>
+ 			<if test="searchCondition == 'body'">
+ 				A.PROJECT_BODY '%' || #{ body } || '%'
+ 			</if>
+ 			<if test="searchCondition == 'name'">
+ 				C.MEMBER_NAME '%' || #{ name } || '%' 
+ 			</if>
+ 	        AND A.PROJECT_DELETE_STATUS = 'N'
+ 		</where>
+ 	</select>
+ 	
+ 	<select id="selectProjectList" resultMap="projectResultMap">
+ 		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#selectProjectList() */
+			   A.PROJECT_CODE
+			 , A.PROJECT_TITLE
+			 , A.PROJECT_START_DATE
+			 , A.PROJECT_END_DATE
+			 , A.PROJECT_PROGRESS
+			 , A.PROJECT_BODY
+			 , A.PROJECT_VERSION
+			 , A.PROJECT_DELETE_STATUS
+			 , A.PROJECT_WRITER
+		  FROM TBL_PROJECT A
+		  JOIN TBL_MEMBER B ON(A.PROJECT_WRITER = B.MEMBER_NAME)
+		  JOIN TBL_PROJECT_MEMBERS C ON(A.PROJECT_CODE = C.PROJECT_CODE)
+		 WHERE C.MEMBER_NO = #{ no }
+		   AND A.PROJECT_DELETE_STATUS = 'N'
+		 ORDER BY PROJECT_CODE DESC
+ 	</select>
+ 	
+ 	<select id="selectProjectMembers" resultMap="projectMembersResultMap">
+		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#selectProjectMembers() */
+		       A.PROJECT_CODE 
+		     , A.MEMBER_NO
+		     , A.PROJECT_PARTICIPATION_YN
+		     , B.MEMBER_NAME
+		     , C.ROLE_NAME
+		  FROM TBL_PROJECT_MEMBERS A
+		  JOIN TBL_MEMBER B ON(A.MEMBER_NO = B.MEMBER_NO)
+		  JOIN TBL_ROLE C ON(A.PROJECT_CODE = C.PROJECT_CODE)
+		 WHERE A.PROJECT_CODE = #{ code }
+		   AND A.PROJECT_PARTICIPATION_YN = 'Y'
+		   AND B.MEMBER_NO = C.MEMBER_NO
+ 	</select>
+ 	
+ 	<insert id="insertProject" parameterType="ProjectDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertProject() */
+ 		  INTO TBL_PROJECT A
+ 		(
+ 		  A.PROJECT_CODE
+ 		, A.PROJECT_TITLE
+ 		, A.PROJECT_START_DATE
+ 		, A.PROJECT_END_DATE
+ 		, A.PROJECT_PROGRESS
+ 		, A.PROJECT_BODY
+ 		, A.PROJECT_VERSION
+ 		, A.PROJECT_DELETE_STATUS
+ 		, A.PROJECT_WRITER
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_PROJECT_NO.NEXTVAL
+ 		, #{ title } 
+ 		, #{ startDate }
+ 		, #{ endDate }
+ 		, '미진행'
+ 		, #{ body }
+ 		, 1
+ 		, 'N'
+ 		, #{ writer }
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertNoticeFisrtProjectRegist" parameterType="NoticeDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertNoticeFisrtProjectRegist() */
+ 		  INTO TBL_NOTICE A
+ 		(
+ 		  A.NOTICE_CODE
+ 		, A.NOTICE_BODY
+ 		, A.NOTICE_URL
+ 		, A.NOTICE_STATUS
+ 		, A.NOTICE_CATEGORY_CODE
+ 		, A.MEMBER_NO
+ 		, A.PROJECT_CODE
+ 		, A.ISSUE_CODE
+ 		, A.SCHEDULE_CODE
+ 		, A.BACKLOG_CODE
+ 		, A.MEETINGLOG_CODE
+ 		, A.SPRINT_CODE
+ 		, A.NOTICE_TIME
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_NOTICE_CODE.NEXTVAL
+ 		, #{ body }
+ 		, #{ url }
+ 		, #{ status }
+ 		, #{ category }
+ 		, #{ no }
+ 		, SEQ_PROJECT_NO.CURRVAL
+ 		, null
+ 		, null
+ 		, null
+ 		, null
+ 		, null
+ 		, SYSDATE
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertNoticeProjectRegist" parameterType="NoticeDTO">
+	 	INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertNoticeProjectRegist() */
+ 		  INTO TBL_NOTICE A
+ 		(
+ 		  A.NOTICE_CODE
+ 		, A.NOTICE_BODY
+ 		, A.NOTICE_URL
+ 		, A.NOTICE_STATUS
+ 		, A.NOTICE_CATEGORY_CODE
+ 		, A.MEMBER_NO
+ 		, A.PROJECT_CODE
+ 		, A.ISSUE_CODE
+ 		, A.SCHEDULE_CODE
+ 		, A.BACKLOG_CODE
+ 		, A.MEETINGLOG_CODE
+ 		, A.SPRINT_CODE
+ 		, A.NOTICE_TIME
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_NOTICE_CODE.NEXTVAL
+ 		, #{ body }
+ 		, #{ url }
+ 		, #{ status }
+ 		, #{ category }
+ 		, #{ no }
+ 		, #{ projectCode }
+ 		, null
+ 		, null
+ 		, null
+ 		, null
+ 		, null
+ 		, SYSDATE
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertProjectWriteMember" parameterType="ProjectMembersDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertProjectWriteMember() */
+ 		  INTO TBL_PROJECT_MEMBERS A
+ 		(
+ 		  A.PROJECT_CODE
+ 		, A.MEMBER_NO
+ 		, A.PROJECT_PARTICIPATION_YN
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_PROJECT_NO.CURRVAL
+ 		, #{ no }
+ 		, 'Y'
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertProjectFirstMemberRole" parameterType="ProjectMembersDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertProjectFirstMemberRole() */
+ 		  INTO TBL_ROLE A
+ 		(
+ 		  A.ROLE_CODE
+ 		, A.ROLE_NAME
+ 		, A.MEMBER_NO
+ 		, A.PROJECT_CODE
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_ROLE_CODE.NEXTVAL
+ 		, #{ roleName }
+ 		, #{ no }
+ 		, SEQ_PROJECT_NO.CURRVAL
+ 		)
+ 	</insert>
+ 	
+ 	<update id="deleteProject" parameterType="_int">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#deleteProject() */
+ 		       TBL_PROJECT A
+ 		   SET A.PROJECT_DELETE_STATUS = 'Y'
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 	</update>
+ 	
+ 	<select id="selectProjectDetail" resultMap="projectResultMap" parameterType="_int">
+ 		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#selectProjectDetail() */
+ 		       A.PROJECT_CODE
+ 		     , A.PROJECT_TITLE
+ 		     , A.PROJECT_START_DATE
+ 		     , A.PROJECT_END_DATE
+ 		     , A.PROJECT_BODY
+ 		     , A.PROJECT_VERSION
+ 		     , A.PROJECT_WRITER
+ 		  FROM TBL_PROJECT A
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 	</select>
+ 	
+ 	<update id="updateProject" parameterType="ProjectDTO">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#updateProject() */
+ 		       TBL_PROJECT A
+ 		   SET A.PROJECT_TITLE = #{ title }
+ 		     , A.PROJECT_START_DATE = #{ startDate }
+ 		     , A.PROJECT_END_DATE = #{ endDate }
+ 		     , A.PROJECT_BODY = #{ body }
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 	</update>
+ 	
+ 	<select id="searchAddMemberList" resultMap="memberResultMap" parameterType="java.lang.String">
+ 		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#searchAddMemberList() */
+ 		       A.MEMBER_ID
+ 		     , A.MEMBER_NAME
+ 		     , A.MEMBER_NO
+ 		  FROM TBL_MEMBER A
+ 		 WHERE A.MEMBER_NAME LIKE '%' || #{ searchMember } || '%'
+ 		   AND A.PERMIT_CODE != 1
+ 		   AND A.ABSENCE_YN = 'N'
+ 	</select>
+ 	
+ 	<insert id="insertProjectMembers" parameterType="ProjectMembersDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertProjectMembers() */
+ 		  INTO TBL_PROJECT_MEMBERS A
+ 		(
+ 		  A.PROJECT_CODE
+ 		, A.MEMBER_NO
+ 		, A.PROJECT_PARTICIPATION_YN
+ 		)
+ 		VALUES
+ 		(
+ 		  #{ code }
+ 		, #{ no }
+ 		, 'Y'
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertProjectMemberRole" parameterType="ProjectMembersDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertProjectMemberRole() */
+ 		  INTO TBL_ROLE A
+ 		(
+ 		  A.ROLE_CODE
+ 		, A.ROLE_NAME
+ 		, A.MEMBER_NO
+ 		, A.PROJECT_CODE
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_ROLE_CODE.NEXTVAL
+ 		, #{ roleName }
+ 		, #{ no }
+ 		, #{ code }
+ 		)
+ 	</insert>
+ 	
+ 	<select id="selectProjectMemberList" resultMap="projectMembersResultMap" parameterType="_int">
+ 		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#selectProjectMemberList() */
+		       A.MEMBER_NO
+		     , A.PROJECT_PARTICIPATION_YN
+		     , B.MEMBER_NAME
+		     , B.MEMBER_ID
+		     , C.ROLE_NAME
+		  FROM TBL_PROJECT_MEMBERS A
+		  JOIN TBL_MEMBER B ON(A.MEMBER_NO = B.MEMBER_NO)
+		  JOIN TBL_ROLE C ON(A.PROJECT_CODE = C.PROJECT_CODE)
+		 WHERE A.PROJECT_CODE = #{ code }
+		   AND A.PROJECT_PARTICIPATION_YN = 'Y'
+		   AND B.MEMBER_NO = C.MEMBER_NO
+		 ORDER BY C.ROLE_NAME
+ 	</select>
+ 	
+ 	<update id="deleteProjectMembers" parameterType="ProjectMembersDTO">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#deleteProjectMembers() */
+ 		       TBL_PROJECT_MEMBERS A
+ 		   SET A.PROJECT_PARTICIPATION_YN = 'N'
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 		   AND A.MEMBER_NO = #{ no }
+ 		   AND A.PROJECT_PARTICIPATION_YN = 'Y'
+ 	</update>
+ 	
+ 	<update id="updateProjectMemberRole" parameterType="ProjectMembersDTO">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#updateProjectMemberRole() */
+ 			   TBL_ROLE A
+ 		   SET A.ROLE_NAME = #{ roleName }
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 		   AND A.MEMBER_NO = #{ no }
+ 	</update>
+ 	
+ 	<update id="updateProjectWriter" parameterType="ProjectMembersDTO">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#updateProjectWriter() */
+ 		       TBL_PROJECT A
+ 		   SET A.PROJECT_WRITER = #{ name }
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 	</update>
+ 	
+ 	<select id="selectProjectMemberNonParticipationList" resultMap="projectMembersResultMap" parameterType="_int">
+ 		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#selectProjectMemberNonParticipationList() */
+ 		       A.MEMBER_NO
+ 		  FROM TBL_PROJECT_MEMBERS A 
+ 		 WHERE A.PROJECT_CODE = #{ code } 
+ 		   AND A.PROJECT_PARTICIPATION_YN = 'N'
+ 	</select>
+ 	
+ 	<update id="updateMemberParticipation" parameterType="ProjectMembersDTO">
+		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#updateMemberParticipation() */
+		       TBL_PROJECT_MEMBERS A
+		   SET A.PROJECT_PARTICIPATION_YN = 'Y'
+		 WHERE A.PROJECT_CODE = #{ code }
+		   AND A.MEMBER_NO = #{ no }
+ 	</update>
+ 	
+ 	<update id="updateMemberRole" parameterType="ProjectMembersDTO">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#updateMemberRole() */
+ 		       TBL_ROLE A
+ 		   SET A.ROLE_NAME = #{ roleName }
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 		   AND A.MEMBER_NO = #{ no }   
+ 	</update>
+ 	
+ 	<insert id="insertFirstVersionHistory" parameterType="ProjectDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertFirstVersionHistory() */
+ 		  INTO TBL_PROJECT_VERSION_HISTORY A
+ 		(
+ 		  A.PROJECT_VERSION_HISTORY_NO
+ 		, A.PROJECT_VERSION_HISTORY_TITLE
+ 		, A.PROJECT_VERSION_HISTORY_BODY
+ 		, A.PROJECT_VERSION_HISTORY_VERSION
+ 		, A.PROJECT_CODE
+ 		, A.PROJECT_VERSION_HISTORY_UPDATE_DATE
+ 		, A.PROJECT_VERSION_HISTORY_UPDATE_MEMBER
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_PROJECT_VERSION_HISTORY_NO.NEXTVAL
+ 		, #{ title }
+ 		, #{ body }
+ 		, 1
+ 		, SEQ_PROJECT_NO.CURRVAL
+ 		, SYSDATE
+ 		, #{ writer }
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertFirstProgressHistory" parameterType="ProjectDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertFirstProgressHistory() */
+ 		  INTO TBL_PROJECT_PROGRESS_HISTORY A
+ 		(
+ 		  A.PROJECT_PROGRESS_HISTORY_NO
+ 		, A.PROJECT_CODE
+ 		, A.PROJECT_PROGRESS_HISTORY_STATUS
+ 		, A.PROJECT_PROGRESS_HISTORY_UPDATE_DATE
+ 		, A.PROJECT_PROGRESS_HISTORY_START_DATE
+ 		, A.PROJECT_PROGRESS_HISTORY_END_DATE
+ 		, A.PROJECT_PROGRESS_HISTORY_UPDATE_MEMBER
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_PROJECT_PROGRESS_HISTORY_NO.NEXTVAL
+ 		, SEQ_PROJECT_NO.CURRVAL
+ 		, #{ progress }
+ 		, SYSDATE
+ 		, #{ startDate }
+ 		, #{ endDate }
+ 		, #{ writer }
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertFirstMemberHistory" parameterType="ProjectMembersDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertFirstMemberHistory() */
+ 		  INTO TBL_PROJECT_MEMBERS_HISTORY A
+ 		(
+ 		  A.PROJECT_MEMBERS_HISTORY_NO
+ 		, A.PROJECT_CODE
+ 		, A.MEMBER_NO
+ 		, A.PROJECT_MEMBERS_HISTORY_UPDATE_DATE
+ 		, A.PROJECT_MEMBERS_HISTORY_ROLE_IN_PROJECT
+ 		, A.PROJECT_MEMBERS_HISTORY_PARTICIPATION_YN
+ 		, A.PROJECT_MEMBERS_HISTORY_MEMBER
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_PROJECT_MEMBERS_HISTORY_NO.NEXTVAL
+ 		, SEQ_PROJECT_NO.CURRVAL
+ 		, #{ no }
+ 		, SYSDATE
+ 		, #{ roleName }
+ 		, 'Y'
+ 		, #{ name }
+ 		)
+ 	</insert>
+ 	
+ 	<update id="updateProjectVersion" parameterType="ProjectDTO">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#updateProjectVersion() */
+ 		       TBL_PROJECT A
+ 		   SET A.PROJECT_VERSION = #{ version }
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 	</update>
+ 	
+ 	<insert id="insertVersionHistory">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertVersionHistory() */
+ 		  INTO TBL_PROJECT_VERSION_HISTORY A
+ 		(
+ 		  A.PROJECT_VERSION_HISTORY_NO
+ 		, A.PROJECT_VERSION_HISTORY_TITLE
+ 		, A.PROJECT_VERSION_HISTORY_BODY
+ 		, A.PROJECT_VERSION_HISTORY_VERSION
+ 		, A.PROJECT_CODE
+ 		, A.PROJECT_VERSION_HISTORY_UPDATE_DATE
+ 		, A.PROJECT_VERSION_HISTORY_UPDATE_MEMBER
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_PROJECT_VERSION_HISTORY_NO.NEXTVAL
+ 		, #{ title }
+ 		, #{ body }
+ 		, #{ version }
+ 		, #{ code }
+ 		, SYSDATE
+ 		, #{ writer }
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertMemberHistory">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertMemberHistory() */
+ 		  INTO TBL_PROJECT_MEMBERS_HISTORY A
+ 		(
+ 		  A.PROJECT_MEMBERS_HISTORY_NO
+ 		, A.PROJECT_CODE
+ 		, A.MEMBER_NO
+ 		, A.PROJECT_MEMBERS_HISTORY_UPDATE_DATE
+ 		, A.PROJECT_MEMBERS_HISTORY_ROLE_IN_PROJECT
+ 		, A.PROJECT_MEMBERS_HISTORY_PARTICIPATION_YN
+ 		, A.PROJECT_MEMBERS_HISTORY_MEMBER
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_PROJECT_MEMBERS_HISTORY_NO.NEXTVAL
+ 		, #{ code }
+ 		, #{ no }
+ 		, SYSDATE
+ 		, #{ roleName }
+ 		, #{ participationYn }
+ 		, #{ name }
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertProgressHistory" parameterType="ProjectDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertProgressHistory() */
+ 		  INTO TBL_PROJECT_PROGRESS_HISTORY A
+ 		(
+ 		  A.PROJECT_PROGRESS_HISTORY_NO
+ 		, A.PROJECT_CODE
+ 		, A.PROJECT_PROGRESS_HISTORY_STATUS
+ 		, A.PROJECT_PROGRESS_HISTORY_UPDATE_DATE
+ 		, A.PROJECT_PROGRESS_HISTORY_START_DATE
+ 		, A.PROJECT_PROGRESS_HISTORY_END_DATE
+ 		, A.PROJECT_PROGRESS_HISTORY_UPDATE_MEMBER
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_PROJECT_PROGRESS_HISTORY_NO.NEXTVAL
+ 		, #{ code }
+ 		, #{ progress }
+ 		, SYSDATE
+ 		, #{ startDate }
+ 		, #{ endDate }
+ 		, #{ writer }
+ 		)
+ 	</insert>
+ 	
+ 	<select id="selectProjectMember" resultMap="projectMembersResultMap">
+ 		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#selectProjectMember() */
+ 		       A.PROJECT_CODE
+ 		     , A.MEMBER_NO
+ 		     , A.PROJECT_PARTICIPATION_YN
+ 		     , B.MEMBER_NAME
+ 		     , C.ROLE_NAME
+ 		  FROM TBL_PROJECT_MEMBERS A
+ 		  JOIN TBL_MEMBER B ON (A.MEMBER_NO = B.MEMBER_NO)
+ 		  JOIN TBL_ROLE C ON (A.PROJECT_CODE = C.PROJECT_CODE AND A.MEMBER_NO = C.MEMBER_NO)
+ 	     WHERE A.PROJECT_CODE = #{ code }
+ 	       AND A.MEMBER_NO = #{ no }
+ 	</select>
+ 	
+ 	<insert id="insertCalendarProjectSchedule" parameterType="ProjectDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertCalendarProjectSchedule() */
+ 		  INTO TBL_CALENDAR_SCHEDULE A
+ 		(
+ 		  A.SCHEDULE_CODE
+ 		, A.SCHEDULE_TITLE
+ 		, A.SCHEDULE_START_DATE
+ 		, A.SCHEDULE_END_DATE
+ 		, A.SCHEDULE_BODY
+ 		, A.MEMBER_NO
+ 		, A.SCHEDULE_WRITER
+ 		, A.CALENDAR_SCHEDULE_TYPE_CODE
+ 		, A.PROJECT_CODE
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_SCHEDULE_CODE.NEXTVAL
+ 		, #{ title }
+ 		, #{ startDate }
+ 		, #{ endDate }
+ 		, #{ body }
+ 		, #{ writerMember.no }
+ 		, #{ writer }
+ 		, 1
+ 		, #{ code }
+ 		)
+ 	</insert>
+ 	
+ 	<insert id="insertCalendarFirstProjectSchedule" parameterType="ProjectDTO">
+ 		INSERT /* com.greedy.byat.notice.model.dao.NoticeMapper#insertCalendarFirstProjectSchedule() */
+ 		  INTO TBL_CALENDAR_SCHEDULE A
+ 		(
+ 		  A.SCHEDULE_CODE
+ 		, A.SCHEDULE_TITLE
+ 		, A.SCHEDULE_START_DATE
+ 		, A.SCHEDULE_END_DATE
+ 		, A.SCHEDULE_BODY
+ 		, A.MEMBER_NO
+ 		, A.SCHEDULE_WRITER
+ 		, A.CALENDAR_SCHEDULE_TYPE_CODE
+ 		, A.PROJECT_CODE
+ 		)
+ 		VALUES
+ 		(
+ 		  SEQ_SCHEDULE_CODE.NEXTVAL
+ 		, #{ title }
+ 		, #{ startDate }
+ 		, #{ endDate }
+ 		, #{ body }
+ 		, #{ writerMember.no }
+ 		, #{ writer }
+ 		, 1
+ 		, SEQ_PROJECT_NO.CURRVAL
+ 		)
+ 	</insert>
+ 	
+ 	<select id="selectSprintProceedingCount" parameterType="ProjectMembersDTO" resultType="_int">
+ 		SELECT /* com.greedy.byat.notice.model.dao.NoticeMapper#selectSprintProceedingCount() */
+		       COUNT(A.SPRINT_CODE)
+		  FROM TBL_SPRINT A
+		  JOIN TBL_SPRINT_MEMBERS B ON(A.SPRINT_CODE = B.SPRINT_CODE)
+		 WHERE A.PROJECT_CODE = #{ code }
+		   AND B.MEMBER_NO = #{ no }
+		   AND (A.SPRINT_PROGRESS = '진행전'
+		    OR A.SPRINT_PROGRESS = '진행중')
+ 	</select>
+ 	
+ 	<update id="updateProjectProgress" parameterType="ProjectDTO">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#updateProjectProgress() */
+ 		       TBL_PROJECT A
+ 		   SET A.PROJECT_PROGRESS = #{ progress }
+ 		 WHERE A.PROJECT_CODE = #{ code }
+ 	</update>
+ 	
+ 	<update id="updateCalendarProject">
+ 		UPDATE /* com.greedy.byat.notice.model.dao.NoticeMapper#updateCalendarProject() */
+ 		       TBL_CALENDAR_SCHEDULE A
+ 		   SET A.SCHEDULE_TITLE = #{ title }
+ 		     , A.SCHEDULE_START_DATE = #{ startDate }
+ 		     , A.SCHEDULE_END_DATE = #{ endDate }
+ 		 WHERE A.MEMBER_NO = #{ writerMember.no }
+ 		   AND A.PROJECT_CODE = #{ code }
+ 	</update>
+ 	
+ </mapper>
